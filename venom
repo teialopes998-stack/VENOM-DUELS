@@ -1,0 +1,492 @@
+-- ===================== INTRO SEQUENCE =====================
+do
+local _TS = game:GetService("TweenService")
+local _SS = game:GetService("SoundService")
+local _PL = game:GetService("Players").LocalPlayer
+local _PG = _PL:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AjjanVsIntro"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 999
+screenGui.Parent = _PG
+
+local bg = Instance.new("Frame")
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.new(0,0,0)
+bg.BackgroundTransparency = 0.4
+bg.BorderSizePixel = 0
+bg.Parent = screenGui
+
+local image = Instance.new("ImageLabel")
+image.Size = UDim2.new(1,0,1,0)
+image.BackgroundTransparency = 1
+image.Image = "rbxassetid://9jqQm"
+image.ImageColor3 = Color3.fromRGB(255,255,255)
+image.ImageTransparency = 1
+image.Parent = bg
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0.9,0,0.25,0)
+title.Position = UDim2.new(0.05,0,0.35,0)
+title.BackgroundTransparency = 1
+title.Text = "VENOM.vs"
+title.TextColor3 = Color3.fromRGB(0,170,255)
+title.TextTransparency = 1
+title.TextScaled = true
+title.Font = Enum.Font.GothamBlack
+title.TextStrokeTransparency = 0.4
+title.TextStrokeColor3 = Color3.new(0,0,0)
+title.Parent = bg
+
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://136350225160627"
+sound.Volume = 0.75
+sound.Looped = false
+sound.Parent = _SS
+sound:Play()
+
+local fadeIn = TweenInfo.new(0.7, Enum.EasingStyle.Quint)
+_TS:Create(image, fadeIn, {ImageTransparency = 0}):Play()
+_TS:Create(title, fadeIn, {TextTransparency = 0}):Play()
+
+task.wait(5)
+
+local fadeOut = TweenInfo.new(1.1, Enum.EasingStyle.Quint)
+_TS:Create(bg, fadeOut, {BackgroundTransparency = 1}):Play()
+_TS:Create(image, fadeOut, {ImageTransparency = 1}):Play()
+_TS:Create(title, fadeOut, {TextTransparency = 1}):Play()
+
+task.wait(1.3)
+screenGui:Destroy()
+sound:Stop()
+sound:Destroy()
+end
+-- ===================== END INTRO =====================
+
+local Players            = game:GetService("Players")
+local HttpService        = game:GetService("HttpService")
+local RunService         = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local UserInputService   = game:GetService("UserInputService")
+local TweenService       = game:GetService("TweenService")
+local ReplicatedStorage  = game:GetService("ReplicatedStorage")
+local Stats              = game:GetService("Stats")
+local CoreGui            = game:GetService("CoreGui")
+local SoundService       = game:GetService("SoundService")
+local InsertService      = game:GetService("InsertService")
+
+
+-- ============================================================
+-- MOBILE COMPATIBILITY PATCH
+-- Mantem PC e mobile no mesmo boot; no mobile nao depende de tecla.
+-- ============================================================
+do
+    local UIS_MOBILE = UserInputService
+    local IS_MOBILE = false
+    pcall(function() IS_MOBILE = UIS_MOBILE.TouchEnabled and not UIS_MOBILE.KeyboardEnabled end)
+    _G._K7IsMobile = IS_MOBILE
+
+    -- Alguns executores mobile nao expõem APIs opcionais. Nunca deixe
+    -- uma dessas APIs interromper a criacao da interface.
+    local genv = (type(getgenv) == "function" and getgenv()) or nil
+    local function pick(name)
+        local v = rawget(_G, name)
+        if v == nil and genv then v = rawget(genv, name) end
+        return v
+    end
+    if not checkcaller then _G.checkcaller = function() return true end end
+    if not newcclosure then _G.newcclosure = function(f) return f end end
+    if not setreadonly then _G.setreadonly = function() end end
+    if not getrawmetatable then _G.getrawmetatable = function() return nil end end
+    if not getconnections then _G.getconnections = function() return {} end end
+    if not setclipboard then _G.setclipboard = pick("toclipboard") end
+
+    -- PlayerGui e' a rota preferida no celular. gethui/CoreGui ficam
+    -- como fallback para executores que exigem essa camada.
+    function _G._K7GetGuiParent()
+        local lp = Players.LocalPlayer
+        local pg = lp and (lp:FindFirstChildOfClass("PlayerGui") or lp:WaitForChild("PlayerGui", 10))
+        if pg then return pg end
+        local ok, hui = pcall(function()
+            return (type(gethui) == "function" and gethui()) or CoreGui
+        end)
+        return ok and hui or CoreGui
+    end
+
+    -- Escala de interface adequada a telas pequenas.
+    function _G._K7MobileScale(root)
+        if not root or not IS_MOBILE then return end
+        pcall(function()
+            local old = root:FindFirstChild("K7MobileScale")
+            if old then old:Destroy() end
+            local sc = Instance.new("UIScale")
+            sc.Name = "K7MobileScale"
+            sc.Scale = 0.82
+            sc.Parent = root
+        end)
+    end
+end
+
+-- ── Lua version compatibility polyfills ──────────────────────
+if not math.clamp then
+    math.clamp = function(v, lo, hi)
+        if v < lo then return lo elseif v > hi then return hi end
+        return v
+    end
+end
+if not math.round then
+    math.round = function(v) return math.floor(v + 0.5) end
+end
+if not typeof then
+    typeof = function(v) return type(v) end
+end
+
+-- ── Volt / executor compatibility shim ───────────────────────
+do
+    local genv = getgenv and getgenv()
+    local function adopt(name, fallback)
+        if _G[name] ~= nil then return end
+        local v = rawget(_G, name)
+        if v == nil and genv then v = rawget(genv, name) end
+        if v == nil and fallback then v = fallback end
+        if v ~= nil then _G[name] = v end
+    end
+    adopt("request")
+    adopt("http_request")
+    adopt("fireproximityprompt")
+    adopt("getconnections")
+    adopt("getcustomasset")
+    adopt("writefile")
+    adopt("readfile")
+    adopt("isfile")
+    adopt("delfile")
+    adopt("setclipboard")
+    adopt("getclipboard")
+    adopt("getrawmetatable")
+    adopt("setreadonly")
+    adopt("newcclosure")
+    adopt("Drawing")
+    if identifyexecutor then
+        local ok, id = pcall(identifyexecutor)
+        if ok then
+            local n = type(id) == "table" and (id.Name or id[1]) or tostring(id or "")
+            if tostring(n):lower():find("volt") then
+                print("[MAY duels] Volt detected")
+            end
+        end
+    end
+end
+
+local request = http_request or (getgenv and (getgenv().request or getgenv().http_request)) or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request) or request
+if not request then
+    warn("[MAY duels] No HTTP request function available")
+end
+
+-- show.vs is rendered with native UI text so it always appears without downloads.
+
+local LP = Players.LocalPlayer
+if not LP then LP = Players.PlayerAdded:Wait() end
+
+-- >>> ANTI DROP BEGIN (versione con raw metatable)
+-- ============================================================
+-- ANTI DROP
+-- Sempre attivo, non si spegne: nessun toggle, nessun salvataggio.
+-- Non tocca la velocita' reale, fa solo vedere al gioco 16 studs/s
+-- qualunque sia la velocita' effettiva. Al movimento ci pensa la
+-- root.Velocity dell'HRP (speed, jump, Anti Bat: tutti la' sopra).
+-- checkcaller() fa passare intatte le scritture dell'hub.
+-- ============================================================
+do
+    local VS_FAKE = 16   -- velocita' mostrata al gioco (walkspeed normale)
+    local spoofedVelocity = Vector3.zero
+    -- Unico bersaglio: l'HRP. I due proxy (speed booster e infinite jump)
+    -- non esistono piu', ora si scrive tutto sulla root.Velocity, quindi i
+    -- loro nomi qui erano voci morte.
+    local SPOOF_NAMES = {
+        HumanoidRootPart = true,
+    }
+    local function isSpoofTarget(self)
+        if typeof(self) ~= "Instance" then return false end
+        if not self:IsA("BasePart") then return false end
+        if not SPOOF_NAMES[self.Name] then return false end
+        local char = LP.Character
+        return char ~= nil and self:IsDescendantOf(char)
+    end
+    -- Hook tramite raw metatable (più robusto e meno rilevabile)
+    pcall(function()
+        if not (getrawmetatable and setreadonly and newcclosure and checkcaller) then
+            return
+        end
+        local mt = getrawmetatable(game)
+        setreadonly(mt, false)
+        local oldIndex = mt.__index
+        mt.__index = newcclosure(function(self, key)
+            if not checkcaller() and (key == "AssemblyLinearVelocity" or key == "Velocity") then
+                if isSpoofTarget(self) then
+                    return spoofedVelocity
+                end
+            end
+            return oldIndex(self, key)
+        end)
+        local oldNewIndex = mt.__newindex
+        mt.__newindex = newcclosure(function(self, key, value)
+            if not checkcaller() and (key == "AssemblyLinearVelocity" or key == "Velocity") then
+                if isSpoofTarget(self) then
+                    spoofedVelocity = value   -- memorizza il valore che l'hub vorrebbe scrivere
+                    return                     -- blocca la scrittura reale
+                end
+            end
+            return oldNewIndex(self, key, value)
+        end)
+        setreadonly(mt, true)
+    end)
+    -- Aggiorna la velocità finta in base alla direzione di movimento
+    local function updateFakeVelocity()
+        local char = LP.Character
+        local hum  = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not char or not hum or not root or hum.Health <= 0 then return end
+        local dir = hum.MoveDirection
+        if dir.Magnitude > 0.05 then
+            -- compatibilità con il client (opzionale)
+            pcall(function()
+                if root.SetNetworkOwner then root:SetNetworkOwner(LP) end
+            end)
+            local unit = dir.Unit
+            spoofedVelocity = Vector3.new(unit.X * VS_FAKE, root.Velocity.Y, unit.Z * VS_FAKE)
+        else
+            spoofedVelocity = Vector3.new(0, root.Velocity.Y, 0)
+        end
+    end
+    local sig = RunService.PreSimulation or RunService.Stepped
+    sig:Connect(updateFakeVelocity)
+end
+-- <<< ANTI DROP END
+
+-- Allow re-execute: tear down old GUI if present
+pcall(function()
+    local pg = game:GetService("Players").LocalPlayer
+    pg = pg and pg:FindFirstChild("PlayerGui")
+    if pg then
+        local old = pg:FindFirstChild("SevenUpDuelsV2")
+        if old then old:Destroy() end
+        local oldStack = pg:FindFirstChild("SevenUpStackButtons")
+        if oldStack then oldStack:Destroy() end
+        local oldIntro = pg:FindFirstChild("K7Intro")
+        if oldIntro then oldIntro:Destroy() end
+    end
+end)
+pcall(function()
+    local cg = (typeof(gethui) == "function" and gethui()) or game:GetService("CoreGui")
+    local oldStack = cg and cg:FindFirstChild("SevenUpStackButtons")
+    if oldStack then oldStack:Destroy() end
+end)
+pcall(function()
+    if _G.AceStopAntiDesyncAimbot then _G.AceStopAntiDesyncAimbot() end
+    if _G.AceStopNormalAimbot then _G.AceStopNormalAimbot() end
+end)
+_G.SevenUpDuelsV2_Running = true
+_G.SevenUpDuelsV2_MainExecuted = false
+_G._K7AntiDesyncKeyBound = false
+
+-- ============================================================
+-- PC FIX / WATCHDOG  (não altera nenhuma função do hub)
+-- Garante que o menu apareça em executores de PC mesmo que a
+-- intro ou o boot falhem. Tecla de emergência: RightControl.
+-- ============================================================
+task.spawn(function()
+    local UIS_wd = game:GetService("UserInputService")
+
+    local function getMainFrame()
+        local pg = LP and LP:FindFirstChild("PlayerGui")
+        local gui = pg and pg:FindFirstChild("SevenUpDuelsV2")
+        if not gui then
+            local ok, cg = pcall(function()
+                return (typeof(gethui) == "function" and gethui()) or game:GetService("CoreGui")
+            end)
+            if ok and cg then gui = cg:FindFirstChild("SevenUpDuelsV2") end
+        end
+        return gui and gui:FindFirstChild("MainOuter") or nil
+    end
+
+    local function forceShow()
+        local mo = getMainFrame()
+        if not mo then return false end
+        _G._K7IntroHidingUI = false
+        pcall(function()
+            mo.Visible = true
+            if mo.Size.X.Offset < 60 or mo.Size.Y.Offset < 60 then
+                mo.Size = UDim2.new(0, 420, 0, 590)
+            end
+            local sc = mo:FindFirstChild("MainUIOnlyScale")
+            if sc and sc:IsA("UIScale") and sc.Scale < 0.3 then sc.Scale = 0.9 end
+            if _G._K7FitMenuToScreen then pcall(_G._K7FitMenuToScreen) end
+        end)
+        pcall(function()
+            local pg = LP and LP:FindFirstChild("PlayerGui")
+            local cg = (typeof(gethui) == "function" and gethui()) or game:GetService("CoreGui")
+            for _, holder in ipairs({ pg, cg }) do
+                local st = holder and holder:FindFirstChild("SevenUpStackButtons")
+                if st then st.Enabled = true end
+            end
+            if _G._K7StackGui then _G._K7StackGui.Enabled = true end
+        end)
+        return true
+    end
+    _G._K7ForceShowMenu = forceShow
+
+    local function rebuild()
+        if not _G._K7Main then return false end
+        _G.SevenUpDuelsV2_MainExecuted = false
+        local ok, err = pcall(_G._K7Main)
+        if not ok then warn("[MAY duels] PC fix - Main() falhou:", err) end
+        return ok
+    end
+
+    -- Emergencia PC: RightControl. No mobile o menu usa toque normalmente.
+    UIS_wd.InputBegan:Connect(function(inp, gp)
+        if _G._K7IsMobile and inp.UserInputType == Enum.UserInputType.Touch then return end
+        if gp then return end
+        if inp.KeyCode ~= Enum.KeyCode.RightControl then return end
+        if not getMainFrame() then rebuild() end
+        task.wait(0.15)
+        forceShow()
+    end)
+
+    -- 1) menu não foi criado -> tenta de novo
+    task.wait(12)
+    if not getMainFrame() then
+        warn("[MAY duels] PC fix: menu não criado, tentando novamente...")
+        rebuild()
+        task.wait(1)
+        if getMainFrame() then forceShow() end
+    end
+
+    -- 2) intro travou e deixou o menu escondido -> libera
+    task.wait(8)
+    local mo = getMainFrame()
+    if mo and (mo.Visible == false or mo.Size.X.Offset < 60) and _G._K7IntroHidingUI ~= false then
+        warn("[MAY duels] PC fix: intro travada, liberando o menu")
+        forceShow()
+        pcall(function()
+            local pg = LP and LP:FindFirstChild("PlayerGui")
+            for _, n in ipairs({ "K7Intro", "MayDuelsIntro", "K7SodaOpeningIntro" }) do
+                local g = pg and pg:FindFirstChild(n)
+                if g then g:Destroy() end
+            end
+        end)
+    end
+end)
+
+
+local UIS = game:GetService("UserInputService")
+local ContentProvider = game:GetService("ContentProvider")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+
+-- ============================================================
+-- SAFE CLICK — botão só ativa com clique/toque de verdade:
+-- precisa PRESSIONAR e SOLTAR em cima do botão, quase sem arrastar.
+-- Isso impede ativação ao passar o dedo por cima (scroll do menu).
+-- ============================================================
+_G._K7SafeClick = function(guiObj, fn)
+    if not guiObj then return end
+    local pressedOn = false
+    local pressX, pressY = 0, 0
+    guiObj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            pressedOn = true
+            pressX, pressY = input.Position.X, input.Position.Y
+        end
+    end)
+    guiObj.InputEnded:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        if not pressedOn then return end
+        pressedOn = false
+        local dx = input.Position.X - pressX
+        local dy = input.Position.Y - pressY
+        if (dx * dx + dy * dy) > 324 then return end -- ~18px de tolerância
+        local okPos, absPos = pcall(function() return guiObj.AbsolutePosition end)
+        local okSize, absSize = pcall(function() return guiObj.AbsoluteSize end)
+        if okPos and okSize and absPos and absSize then
+            local x, y = input.Position.X, input.Position.Y
+            if x < absPos.X or x > absPos.X + absSize.X or y < absPos.Y or y > absPos.Y + absSize.Y then
+                return
+            end
+        end
+        task.spawn(fn)
+    end)
+end
+
+local LP = Players.LocalPlayer or Players:WaitForChild("LocalPlayer")
+
+local _isfile = isfile or (syn and syn.isfile) or (getgenv and getgenv().isfile) or function() return false end
+local _readfile = readfile or (syn and syn.readfile) or (getgenv and getgenv().readfile) or function() return nil end
+local _writefile = writefile or (syn and syn.writefile) or (getgenv and getgenv().writefile) or function() end
+local _delfile = delfile or (syn and syn.delfile) or (getgenv and getgenv().delfile) or function() end
+local _setclipboard = setclipboard or toclipboard or (syn and syn.write_clipboard) or (getgenv and (getgenv().setclipboard or getgenv().toclipboard))
+local _getclipboard = getclipboard or (syn and syn.read_clipboard) or (getgenv and getgenv().getclipboard)
+local getconnections = getconnections or (getgenv and getgenv().getconnections) or get_signal_cons or getconnects or (syn and syn.get_signal_cons)
+
+local activeSpeedValue = 60
+
+local _request = request or http_request or (getgenv and (getgenv().request or getgenv().http_request)) or (syn and syn.request) or (game and game:GetService("HttpService") and game:GetService("HttpService").RequestAsync) or nil
+
+if not fireproximityprompt then
+    fireproximityprompt = (getgenv and getgenv().fireproximityprompt)
+        or (genv and genv().fireproximityprompt)
+        or function(prompt)
+            pcall(function()
+                prompt:InputHoldBegin()
+                task.wait(0.05)
+                prompt:InputHoldEnd()
+            end)
+        end
+end
+
+repeat task.wait() until game:IsLoaded()
+
+-- ============================================================
+-- COLOR SCHEMES (green theme)
+-- ============================================================
+COLOR_SCHEMES = {
+    ["rbxassetid://102557909116203"] = {  -- LIGHT BLUE CYBER
+        main = Color3.fromRGB(255, 0, 0),
+        mainLight = Color3.fromRGB(255, 80, 80),
+        mainDark = Color3.fromRGB(180, 0, 0),
+        accent = Color3.fromRGB(255, 40, 40),
+        text = Color3.fromRGB(245, 250, 255),
+        subText = Color3.fromRGB(180, 220, 245),
+        border = Color3.fromRGB(255, 0, 0),
+        buttonBg = Color3.fromRGB(255, 0, 0),
+        buttonText = Color3.fromRGB(255, 255, 255),
+        speedText = Color3.fromRGB(120, 230, 255),
+        discordText = Color3.fromRGB(140, 220, 255),
+        tabActive = Color3.fromRGB(255, 50, 50),
+        tabIdle = Color3.fromRGB(180, 0, 0),
+        progressBg = Color3.fromRGB(12, 30, 55),
+        toggleOn = Color3.fromRGB(255, 0, 0),
+        toggleOff = Color3.fromRGB(20, 45, 80),
+        inputBg = Color3.fromRGB(14, 32, 60),
+        inputBorder = Color3.fromRGB(70, 160, 230),
+        inputText = Color3.fromRGB(220, 240, 255),
+        rowBg = Color3.fromRGB(16, 40, 72),
+        rowHover = Color3.fromRGB(28, 60, 110),
+        sectionHeader = Color3.fromRGB(140, 225, 255),
+        closeBtn = Color3.fromRGB(160, 210, 240),
+        closeBtnHover = Color3.fromRGB(200, 240, 255),
+        titleText = Color3.fromRGB(230, 245, 255),
+        subtitleText = Color3.fromRGB(140, 210, 245),
+        stackBg = Color3.fromRGB(14, 32, 68),
+        stackActive = Color3.fromRGB(255, 0, 0),
+        stackText = Color3.fromRGB(180, 230, 255),
+        stackActiveText = Color3.fromRGB(255, 255, 255),
+        stackBorder = Color3.fromRGB(255, 0, 0),
+        stackActiveBorder = Color3.fromRGB(255, 50, 50),
+        dot = Color3.fromRGB(70, 140, 200),
+        dotOn = Color3.fromRGB(80, 220, 255),
+        pillOff = Color3.fromRGB(24, 50, 90),
+        pillOn = Color3.fromRGB(255, 0, 0),
+        modeBtn
