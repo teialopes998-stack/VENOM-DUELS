@@ -1,0 +1,511 @@
+print("=========================================")
+print("Leaked by Alone/Cooki discord.gg/txJ2GHwfHg")
+print("=========================================")
+repeat task.wait() until game:IsLoaded()
+local Players,RunService,UIS,TS,Lighting,HS = game:GetService("Players"),game:GetService("RunService"),game:GetService("UserInputService"),game:GetService("TweenService"),game:GetService("Lighting"),game:GetService("HttpService")
+local LP = Players.LocalPlayer
+-- ===== Anti-Bat V2 panel removed =====
+_G._OpenAntiBat = nil
+
+
+
+_G._FearSky = _G._FearSky or {}
+_G._FearSky.TAG = "FearSkyTheme"
+_G._FearSky.mode = "Off"
+_G._FearSky.original = nil
+_G._FearSky.PRESETS = {
+["Night"]     = {clock = 22,   brightness = 2,   ambient = {110,100,130}, outAmb = {120,110,140}, sky = {stars = 4000, moon = 18, sun = 0, moonTex = true}, atm = {dens = 0.45, color = {120,60,180}, decay = {60,20,100}, glare = 0.5, haze = 1.2}},
+["Galaxy"]    = {clock = 0,    brightness = 1.5, ambient = {70,60,100},   outAmb = {80,70,110},   sky = {stars = 10000, moon = 30, sun = 0}, atm = {dens = 0.15, color = {40,20,80}, decay = {20,10,50}, glare = 0.3, haze = 0.5}},
+["Blood Moon"]= {clock = 22.5, brightness = 1.6, ambient = {130,40,40},   outAmb = {150,50,50},   sky = {stars = 1500, moon = 28, sun = 0, moonTex = true}, atm = {dens = 0.6, color = {220,30,30}, decay = {120,10,10}, glare = 1.4, haze = 2}, clouds = {cover = 0.5, dens = 0.7, color = {120,30,30}}},
+["Vaporwave"] = {clock = 19.5, brightness = 1.2, ambient = {120,95,130}, outAmb = {130,100,140}, sky = {stars = 1000, moon = 14}, atm = {dens = 0.3, color = {255,130,235}, decay = {150,90,255}, glare = 2.6, haze = 1.6}, clouds = {cover = 0.5, dens = 0.55, color = {230,190,255}}},
+}
+function _G._FearSky.saveOriginal()
+if _G._FearSky.original then return end
+_G._FearSky.original = {ClockTime=Lighting.ClockTime, OutdoorAmbient=Lighting.OutdoorAmbient, Ambient=Lighting.Ambient, Brightness=Lighting.Brightness, FogStart=Lighting.FogStart, FogEnd=Lighting.FogEnd, FogColor=Lighting.FogColor, ColorShift_Top=Lighting.ColorShift_Top, ColorShift_Bottom=Lighting.ColorShift_Bottom, GlobalShadows=Lighting.GlobalShadows, LightingChildren={}, TerrainChildren={}}
+for _,c in ipairs(Lighting:GetChildren()) do if c:IsA("Sky") or c:IsA("Atmosphere") then table.insert(_G._FearSky.original.LightingChildren, c:Clone()) end end
+local t = workspace:FindFirstChildOfClass("Terrain")
+if t then for _,c in ipairs(t:GetChildren()) do if c:IsA("Clouds") then table.insert(_G._FearSky.original.TerrainChildren, c:Clone()) end end end
+end
+function _G._FearSky.clear()
+for _,c in ipairs(Lighting:GetChildren()) do if c:GetAttribute(_G._FearSky.TAG) then pcall(function() c:Destroy() end) end end
+local t = workspace:FindFirstChildOfClass("Terrain")
+if t then for _,c in ipairs(t:GetChildren()) do if c:GetAttribute(_G._FearSky.TAG) then pcall(function() c:Destroy() end) end end end
+end
+function _G._FearSky.apply(mode)
+_G._FearSky.saveOriginal(); _G._FearSky.clear()
+local t = workspace:FindFirstChildOfClass("Terrain")
+local p = _G._FearSky.PRESETS[mode]
+if not p then
+if _G._FearSky.original then
+for k,v in pairs(_G._FearSky.original) do if k ~= "LightingChildren" and k ~= "TerrainChildren" then pcall(function() Lighting[k] = v end) end end
+for _,c in ipairs(_G._FearSky.original.LightingChildren or {}) do c:Clone().Parent = Lighting end
+if t then for _,c in ipairs(_G._FearSky.original.TerrainChildren or {}) do c:Clone().Parent = t end end
+end
+_G._FearSky.mode = "Off"
+return
+end
+Lighting.FogStart = 0; Lighting.FogEnd = 100000; Lighting.GlobalShadows = true
+Lighting.ClockTime = p.clock or 14; Lighting.Brightness = p.brightness or 2
+if p.outAmb then Lighting.OutdoorAmbient = Color3.fromRGB(p.outAmb[1], p.outAmb[2], p.outAmb[3]) end
+if p.ambient then Lighting.Ambient = Color3.fromRGB(p.ambient[1], p.ambient[2], p.ambient[3]) end
+if p.sky then
+local s = Instance.new("Sky"); s:SetAttribute(_G._FearSky.TAG, true)
+if p.sky.stars then s.StarCount = p.sky.stars end
+if p.sky.moon then s.MoonAngularSize = p.sky.moon end
+if p.sky.sun then s.SunAngularSize = p.sky.sun end
+if p.sky.moonTex then s.MoonTextureId = "rbxasset://sky/moon.jpg" end
+s.Parent = Lighting
+end
+if p.atm then
+local a = Instance.new("Atmosphere"); a:SetAttribute(_G._FearSky.TAG, true)
+a.Density = p.atm.dens or 0.3
+a.Color = Color3.fromRGB(p.atm.color[1], p.atm.color[2], p.atm.color[3])
+a.Decay = Color3.fromRGB(p.atm.decay[1], p.atm.decay[2], p.atm.decay[3])
+a.Glare = p.atm.glare or 1; a.Haze = p.atm.haze or 1
+a.Parent = Lighting
+end
+if p.clouds and t then
+local c = Instance.new("Clouds"); c:SetAttribute(_G._FearSky.TAG, true)
+c.Cover = p.clouds.cover or 0.5; c.Density = p.clouds.dens or 0.5
+c.Color = Color3.fromRGB(p.clouds.color[1], p.clouds.color[2], p.clouds.color[3])
+c.Parent = t
+end
+_G._FearSky.mode = mode
+end
+local NS,CS = 60,30
+local LAGGER_SPEED = 15
+local LAGGER_CARRY_SPEED = 24.5
+local speedMode,antiRagdollEnabled,infJumpEnabled = false,false,true
+local infJumpMode = "hold"
+local laggerToggled = false
+local laggerPhase = 0
+local medusaCounterEnabled = false
+_G._MedReset = _G._MedReset or {enabled=false,pending=false}
+local batCounterEnabled = false
+local unwalkEnabled = false
+local medusaDebounce,medusaLastUsed,dropActive = false,0,false
+local DROP_TYPES = {STAND="Stand Drop", JUMP="Jump Drop"}
+local currentDropType = DROP_TYPES.STAND
+local standDropBtn,jumpDropBtn = nil,nil
+local _dropConn = nil
+local autoLeftEnabled,autoRightEnabled = false,false
+local autoLeftSetVisual,autoRightSetVisual = nil,nil
+local speedLabel = nil
+local autoBatEnabled = false
+local autoNearCarryEnabled = true
+local antiBatActive = false
+local stopAntiBat, setAntiBatVisual, toggleAntiBat
+_G._CursedUILocked = true
+local autoSwingEnabled = true
+local autoBatSetVisual = nil
+local autoBatEquippedThisRun = false
+local _autoBatTarget = nil
+local _autoBatLastScan = 0
+local resetAutoBatMotion = nil
+local aimbotSpeed = 58
+local AUTO_BAT_SPEED,AUTO_BAT_VERT_SPEED,AUTO_BAT_DIST,AUTO_BAT_HEIGHT,AUTO_BAT_V_OFF,AUTO_BAT_TURN_SPEED,AUTO_BAT_MAX_TURN_RATE = 58,52,-2.8,4.75,1,285,28
+local setBatCounterVisual = nil
+local startBatCounter,stopBatCounter
+local antiLagEnabled = false
+local removeAccessoriesEnabled = false
+local antiLagDescConn = nil
+local stretchRezEnabled = false
+local stretchRezConn = nil
+local setStretchRezVisual = nil
+local _anyKeyListening = false
+local autoTPEnabled = false
+local autoTPHeight = 20
+local autoTPConn = nil
+local setAutoTPVisual = nil
+local cursedResetRemote = nil
+local CURSED_RESET_GUID = "f888ee6e-c86d-46e1-93d7-0639d6635d42"
+local _updateMobileAutoLeft, _updateMobileAutoRight
+local ragdollTPEnabled=false
+local ragdollTPSetVisual=nil
+local _ragdollTPConns={}
+local _ragdollTPLast=0
+-- (animation pack engine removed)
+_G._Dysnc = _G._Dysnc or {}
+do
+_G._Dysnc.enabled = _G._Dysnc.enabled or false
+_G._Dysnc.range = _G._Dysnc.range or 8
+local conn = nil
+local hitCooldown = false
+local function getBat()
+local char = LP.Character
+if not char then return nil end
+local tool = char:FindFirstChild("Bat")
+if tool then return tool end
+local bp = LP:FindFirstChild("Backpack")
+if bp then
+tool = bp:FindFirstChild("Bat")
+if tool then tool.Parent = char; return tool end
+end
+return nil
+end
+local function tryHitBat()
+if hitCooldown then return end
+hitCooldown = true
+pcall(function()
+local bat = getBat()
+if bat then
+bat:Activate()
+local ev = bat:FindFirstChildWhichIsA("RemoteEvent")
+if ev then ev:FireServer() end
+end
+end)
+task.delay(0.08,function() hitCooldown = false end)
+end
+local function getClosest()
+local char = LP.Character
+local hrp = char and char:FindFirstChild("HumanoidRootPart")
+if not hrp then return nil end
+local cp, cd = nil, math.huge
+for _, p in pairs(Players:GetPlayers()) do
+if p ~= LP and p.Character then
+local tr = p.Character:FindFirstChild("HumanoidRootPart")
+local ph = p.Character:FindFirstChildOfClass("Humanoid")
+if tr and ph and ph.Health > 0 then
+local d = (hrp.Position - tr.Position).Magnitude
+if d < cd then cd = d; cp = p end
+end
+end
+end
+return cp
+end
+local function startDysnc()
+if conn then conn:Disconnect() end
+conn = RunService.Heartbeat:Connect(function()
+if not _G._Dysnc.enabled then return end
+local char = LP.Character
+local hrp = char and char:FindFirstChild("HumanoidRootPart")
+local hum = char and char:FindFirstChildOfClass("Humanoid")
+if not (hrp and hum) then return end
+local target = getClosest()
+if target and target.Character then
+local tr = target.Character:FindFirstChild("HumanoidRootPart")
+if tr then
+if sethiddenproperty then pcall(sethiddenproperty,hrp,"PhysicsRepRootPart",tr) end
+local targetPos = tr.Position + Vector3.new(0,0.9,0)
+if (hrp.Position - targetPos).Magnitude > _G._Dysnc.range then hrp.CFrame = CFrame.new(targetPos) end
+local cam = workspace.CurrentCamera
+if cam then cam.CFrame = CFrame.new(cam.CFrame.Position, tr.Position) end
+tryHitBat()
+end
+end
+end)
+end
+local function stopDysnc()
+if conn then conn:Disconnect(); conn = nil end
+end
+_G._Dysnc.start = startDysnc
+_G._Dysnc.stop = stopDysnc
+end
+_G._BodyLock = _G._BodyLock or {}
+do
+_G._BodyLock.enabled = _G._BodyLock.enabled or false
+_G._BodyLock.radius = _G._BodyLock.radius or 20
+local conn = nil
+local function getClosestPlayer()
+local char = LP.Character
+if not char then return nil, math.huge end
+local hrp = char:FindFirstChild("HumanoidRootPart")
+if not hrp then return nil, math.huge end
+local closest, dist = nil, math.huge
+for _, p in ipairs(Players:GetPlayers()) do
+if p ~= LP and p.Character then
+local tr = p.Character:FindFirstChild("HumanoidRootPart")
+local ph = p.Character:FindFirstChildOfClass("Humanoid")
+if tr and ph and ph.Health > 0 then
+local d = (hrp.Position - tr.Position).Magnitude
+if d < dist then dist = d; closest = p end
+end
+end
+end
+return closest, dist
+end
+local function startBodyLock()
+if conn then return end
+conn = true
+local hum0 = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+if hum0 then hum0.AutoRotate = false end
+-- bind AFTER the camera/shift-lock update so our body rotation wins each frame
+RunService:BindToRenderStep("CursedBodyLock", Enum.RenderPriority.Character.Value + 1, function()
+if not _G._BodyLock.enabled then return end
+local char = LP.Character; if not char then return end
+local root = char:FindFirstChild("HumanoidRootPart"); if not root then return end
+local hum = char:FindFirstChildOfClass("Humanoid"); if not hum then return end
+if hum.AutoRotate then hum.AutoRotate = false end
+local closest, dist = getClosestPlayer()
+if not closest or not closest.Character then return end
+if dist > _G._BodyLock.radius then return end
+local tr = closest.Character:FindFirstChild("HumanoidRootPart"); if not tr then return end
+local myPos = root.Position
+local flat = Vector3.new(tr.Position.X - myPos.X, 0, tr.Position.Z - myPos.Z)
+if flat.Magnitude < 0.01 then return end
+flat = flat.Unit
+-- rotate the body toward the target via angular velocity (physics-safe, no teleport)
+local goalCF = CFrame.lookAt(myPos, myPos + flat)
+local diffCF = root.CFrame:Inverse() * goalCF
+local _, ry, _ = diffCF:ToEulerAnglesXYZ()
+ry = math.clamp(ry, -math.pi, math.pi)
+root.RotVelocity = root.CFrame:VectorToWorldSpace(Vector3.new(0, ry * 40, 0))
+end)
+end
+local function stopBodyLock()
+if conn then pcall(function() RunService:UnbindFromRenderStep("CursedBodyLock") end); conn = nil end
+local char = LP.Character
+local hum = char and char:FindFirstChildOfClass("Humanoid")
+if hum then hum.AutoRotate = true end
+local root = char and char:FindFirstChild("HumanoidRootPart")
+if root then root.RotVelocity = Vector3.zero end
+end
+_G._BodyLock.start = startBodyLock
+_G._BodyLock.stop = stopBodyLock
+end
+local InfJumpPlatform = nil
+local function CreateIJP()
+if InfJumpPlatform then return end
+InfJumpPlatform = Instance.new("Part")
+InfJumpPlatform.Name = "InfJumpPlatform"
+InfJumpPlatform.Size = Vector3.new(8, 0.5, 8)
+InfJumpPlatform.Anchored = true
+InfJumpPlatform.CanCollide = true
+InfJumpPlatform.Transparency = 1
+InfJumpPlatform.Material = Enum.Material.ForceField
+InfJumpPlatform.Parent = workspace
+end
+CreateIJP()
+RunService.Heartbeat:Connect(function()
+if not infJumpEnabled then
+if InfJumpPlatform then
+InfJumpPlatform.Position = Vector3.new(0, -1000, 0)
+end
+return
+end
+local char = LP.Character
+local root = char and char:FindFirstChild("HumanoidRootPart")
+local hum = char and char:FindFirstChildOfClass("Humanoid")
+if not (char and root and hum) then
+if InfJumpPlatform then
+InfJumpPlatform.Position = Vector3.new(0, -1000, 0)
+end
+return
+end
+local isJumping = UIS:IsKeyDown(Enum.KeyCode.Space)
+or hum:GetState() == Enum.HumanoidStateType.Jumping
+or hum.Jump
+if isJumping then
+if not InfJumpPlatform then CreateIJP() end
+InfJumpPlatform.Position = root.Position - Vector3.new(0, 3.5, 0)
+if root.Velocity.Y < 50 then
+root.Velocity = Vector3.new(root.Velocity.X, 50, root.Velocity.Z)
+end
+else
+if InfJumpPlatform then
+InfJumpPlatform.Position = Vector3.new(0, -1000, 0)
+end
+end
+end)
+task.spawn(function()
+local BLACKLIST_URL="https://pastebin.com/2zLUXv2K"
+pcall(function() HS.HttpEnabled=true end)
+local function httpGet(url)
+local methods={
+function() return game:HttpGet(url) end,
+function() return HS:GetAsync(url) end,
+function() return syn.request({Url=url,Method="GET"}).Body end,
+function() return http_request({Url=url,Method="GET"}).Body end,
+function() return request({Url=url,Method="GET"}).Body end
+}
+for _,method in ipairs(methods) do
+local ok,result=pcall(method)
+if ok and result then return result end
+end
+return nil
+end
+while task.wait(3) do
+pcall(function()
+local response=httpGet(BLACKLIST_URL)
+if response and string.find(response,tostring(LP.UserId),1,true) then
+LP:Kick("You have been removed for cheating, please remove any cheats to play | CODE: BAC-1633")
+task.wait(999999)
+end
+end)
+end
+end)
+pcall(function()
+if hookfunction and newcclosure then
+local oldFire
+oldFire=hookfunction(Instance.new("RemoteEvent").FireServer,newcclosure(function(self,...)
+if not cursedResetRemote and typeof(self)=="Instance" and self:IsA("RemoteEvent") and self.Name:sub(1,3)=="RE/" then cursedResetRemote=self end
+return oldFire(self,...)
+end))
+end
+end)
+task.spawn(function()
+task.wait(2)
+if cursedResetRemote then return end
+for _,desc in ipairs(game:GetDescendants()) do
+if desc:IsA("RemoteEvent") and desc.Name:sub(1,3)=="RE/" then cursedResetRemote=desc;break end
+end
+end)
+local function cursedInstaReset()
+if not cursedResetRemote then
+for _,desc in ipairs(game:GetDescendants()) do
+if desc:IsA("RemoteEvent") and desc.Name:sub(1,3)=="RE/" then cursedResetRemote=desc;break end
+end
+end
+if not cursedResetRemote then return end
+local character=LP.Character
+local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+if humanoid and humanoid.Health<=0 then pcall(function() cursedResetRemote:FireServer(CURSED_RESET_GUID,LP,"balloon") end);return end
+local resetDetected=false
+local conns={}
+if humanoid then
+table.insert(conns,humanoid.Died:Connect(function() resetDetected=true end))
+table.insert(conns,humanoid:GetPropertyChangedSignal("Health"):Connect(function() if humanoid.Health<=0 then resetDetected=true end end))
+end
+if character then table.insert(conns,character.AncestryChanged:Connect(function(_,parent) if not parent then resetDetected=true end end)) end
+task.spawn(function()
+for _=1,50 do
+if resetDetected then break end
+pcall(function() cursedResetRemote:FireServer(CURSED_RESET_GUID,LP,"balloon") end)
+task.wait()
+end
+for _,conn in ipairs(conns) do pcall(function() conn:Disconnect() end) end
+end)
+end
+
+_G.MiroInstaReset = cursedInstaReset
+autoResetOnDeath = false
+
+_G.__Miro_hookDeath = function(char)
+if not char then return end
+local hum = char:FindFirstChildOfClass("Humanoid")
+if not hum then
+hum = char:WaitForChild("Humanoid",5)
+end
+if not hum then return end
+hum.Died:Connect(function()
+if autoResetOnDeath then
+task.spawn(function()
+pcall(cursedInstaReset)
+end)
+end
+end)
+end
+
+task.spawn(function()
+if LP.Character then
+_G.__Miro_hookDeath(LP.Character)
+end
+LP.CharacterAdded:Connect(function(char)
+task.wait(0.2)
+_G.__Miro_hookDeath(char)
+end)
+end)
+
+local KB = {
+DropBrainrot={kb=Enum.KeyCode.X,gp=nil},
+AutoLeft    ={kb=Enum.KeyCode.Z,gp=nil},
+AutoRight   ={kb=Enum.KeyCode.C,gp=nil},
+AutoBat     ={kb=Enum.KeyCode.E,gp=nil},
+TPFloor     ={kb=Enum.KeyCode.F,gp=nil},
+InstaReset  ={kb=Enum.KeyCode.T,gp=nil},
+GuiHide     ={kb=Enum.KeyCode.LeftControl,gp=nil},
+SpeedToggle ={kb=Enum.KeyCode.Q,gp=nil},
+LaggerToggle={kb=Enum.KeyCode.R,gp=nil},
+AntiBat     ={kb=Enum.KeyCode.J,gp=nil},
+Dysnc       ={kb=Enum.KeyCode.G,gp=nil},
+}
+local AP_L1,AP_L2 = Vector3.new(-476.47,-6.28,92.73),Vector3.new(-483.12,-4.95,94.81)
+local AP_R1,AP_R2 = Vector3.new(-476.16,-6.52,25.62),Vector3.new(-483.06,-5.03,25.48)
+local Steal = {
+AutoStealEnabled=false,StealRadius=8,StealDuration=0.1,
+Mode="normal",
+HalfFireRange=10,HalfHoldMin=1.3,HalfHoldMax=2.6,HalfEntryDelay=0.3,
+Data={}
+}
+local isStealing = false
+local stealStartTime = nil
+local Conns = {autoSteal=nil,antiRag=nil,batCounter=nil,anchor={},progress=nil}
+local MEDUSA_COOLDOWN = 25
+local batCounterDebounce = false
+local progressRadLbl,progressFill,progressPct
+local modeValLbl
+local lastMoveDir = Vector3.new(0,0,0)
+local MOVE_KEYS={[Enum.KeyCode.W]=true,[Enum.KeyCode.A]=true,[Enum.KeyCode.S]=true,[Enum.KeyCode.D]=true,
+[Enum.KeyCode.Up]=true,[Enum.KeyCode.Left]=true,[Enum.KeyCode.Down]=true,[Enum.KeyCode.Right]=true}
+local CARRY_DETECTION_RADIUS = 18
+local function isNearPodiumWithPrompt()
+local char=LP.Character
+local hrpL=char and char:FindFirstChild("HumanoidRootPart")
+if not hrpL then return false end
+local plots=workspace:FindFirstChild("Plots")
+if not plots then return false end
+for _,plot in ipairs(plots:GetChildren()) do
+local podiums=plot:FindFirstChild("AnimalPodiums")
+if podiums then
+for _,podium in ipairs(podiums:GetChildren()) do
+repeat
+if not podium:IsA("Model") then break end
+local base=podium:FindFirstChild("Base")
+if not base then break end
+local sp=base:FindFirstChild("Spawn")
+if not sp then break end
+if (hrpL.Position-podium:GetPivot().Position).Magnitude>CARRY_DETECTION_RADIUS then break end
+local att=sp:FindFirstChild("PromptAttachment")
+if not att then break end
+for _,obj in ipairs(att:GetChildren()) do
+if obj:IsA("ProximityPrompt") and obj.Enabled then return true end
+end
+until true
+end
+end
+end
+return false
+end
+local function isHoldingBrainrot()
+local char = LP.Character
+if not char then return false end
+for _, obj in ipairs(char:GetChildren()) do
+if obj:IsA("Tool") then return true end
+end
+return false
+end
+-- Vynx2-style speed: apply a mass-compensated impulse toward the target
+-- horizontal velocity instead of hard-writing hrp.Velocity. Y is left alone.
+local function massImpulse(hrp, direction, targetSpeed)
+	local mass = hrp.AssemblyMass or 1
+	local current = hrp.AssemblyLinearVelocity
+	local desired = Vector3.new(direction.X * targetSpeed, current.Y, direction.Z * targetSpeed)
+	local delta = desired - current
+	-- impulse (physics-natural) ...
+	pcall(function() hrp:ApplyImpulse(Vector3.new(delta.X, 0, delta.Z) * mass) end)
+	-- ... then pin the horizontal velocity so drag/friction can't hold us below target
+	hrp.AssemblyLinearVelocity = Vector3.new(desired.X, current.Y, desired.Z)
+end
+local function getActiveMoveSpeed()
+if laggerToggled then return laggerPhase==2 and LAGGER_CARRY_SPEED or LAGGER_SPEED end
+if speedMode then return CS end
+return NS
+end
+local function getAutoPathSpeed()
+return laggerToggled and LAGGER_SPEED or NS
+end
+local function isRagdollState(hum)
+if not hum then return true end
+local st=hum:GetState()
+return hum.PlatformStand or st==Enum.HumanoidStateType.Physics or st==Enum.HumanoidStateType.Ragdoll or st==Enum.HumanoidStateType.FallingDown
+end
+local function isMyPlotByName(plotName)
+local plots=workspace:FindFirstChild("Plots")
+if not plots then return false end
+local plot=plots:FindFirstChild(plotName)
+if not plot then return false end
+local sign=plot:FindFirstChild("PlotSign")
+if sign then
+local yb=sign:FindFirstChild("YourBase")
+if yb and yb:IsA("BillboardGui") then
+return y
